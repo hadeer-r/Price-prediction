@@ -1,4 +1,3 @@
-setwd("C:/Users/Esraa/Downloads/statistical inference/Project Statistical")
 used_car_data <- read.csv("used_car_dataset.csv", na.strings="")
 DF<-data.frame()
 View(used_car_data)
@@ -130,7 +129,7 @@ colSums(is.na(used_car_data))
   
   hist(used_car_data$AskPrice, col = "lightblue", ylab="frequency" ,xlab = "AskPrice", main = "AskPrice Histogram")
   
-  
+
   boxplot(used_car_data$Brand, col = rainbow(6), ylab = "Brand Boxplot")
   rug(used_car_data$Brand,side=2)
   
@@ -153,5 +152,30 @@ colSums(is.na(used_car_data))
   rug(used_car_data$AskPrice,side=2)
   
   boxplot(used_car_data, col = rainbow(6), ylab = "used_car_data Boxplot")
+
+  
+  # using Naive Base
+  
+  install.packages("e1071")
+  library(e1071)
+  
+  dtrain <-rbind(used_car_data[1:10,],used_car_data[11:7180,])
+  print(dtrain)
+  dtest <-rbind(used_car_data[7180:7190,],used_car_data[7191:9582,])
+  print(dtest)
+  
+  x <-used_car_data[,-7]
+  print(x)
+  
+  y<-used_car_data[,7]
+  print(y)
+  
+  ClassCars<-naiveBayes(AskPrice~.,data=dtrain)
+  
+  PricePredition<-predict(ClassCars,newdata=dtest)
+  
+  
+  
+  
   
   
