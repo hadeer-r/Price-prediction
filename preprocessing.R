@@ -1,4 +1,9 @@
+
+install.packages(c("dplyr", "lubridate", "tidyr"))
 used_car_data <- read.csv("used_car_dataset.csv", na.strings="")
+library(dplyr)
+library(lubridate)
+library(tidyr)
 DF<-data.frame()
 View(used_car_data)
 dim(used_car_data)
@@ -7,14 +12,16 @@ names(used_car_data)
 colSums(is.na(used_car_data))
 
 KmDriven_counts <- table(used_car_data$kmDriven)
-KmDriven_counts <- table(used_car_data$kmDriven)
+
 sorted_kmDriven_counts <- sort(KmDriven_counts, decreasing = TRUE)
 most_frequent_kmDriven <- names(sorted_kmDriven_counts)[1]
+
 print(most_frequent_kmDriven)
+
 used_car_data$kmDriven[is.na(used_car_data$kmDriven)]<-most_frequent_kmDriven
 
 colSums(is.na(used_car_data))
-
+#used_car_data$PostedDate <- dmy(used_car_data$PostedDate)
 
  
   used_car_data <- used_car_data[, -3]
@@ -25,11 +32,14 @@ colSums(is.na(used_car_data))
   
   used_car_data <- used_car_data[, -8]
   
- # used_car_data$KmDriven <- as.character(used_car_data$KmDriven)
+  #used_car_data$KmDriven <- as.character(used_car_data$KmDriven)
   
+  #.str.replace(' km', '').str.replace(',', '').astype(float)
 
-  #used_car_data$KmDriven <- sub("km", "", used_car_data$KmDriven)
+  used_car_data$kmDriven <- as.numeric(gsub("[ km,]", "", used_car_data$kmDriven))
   
+  
+  used_car_data$AskPrice <- as.numeric(gsub('[₹,]', '', used_car_data$AskPrice))
   
   used_car_data$Brand <- as.factor(used_car_data$Brand)
   used_car_data$Brand <- as.numeric(used_car_data$Brand)
@@ -52,6 +62,7 @@ colSums(is.na(used_car_data))
   used_car_data <- used_car_data[, -7]
   
   par(mfrow=c(2,3))
+  
   plot(sort(used_car_data$Brand))
   plot(used_car_data$Brand, ylab = "Brand", xlab = "Rank", main = "Distribution of Brand")
   
@@ -159,23 +170,66 @@ colSums(is.na(used_car_data))
   install.packages("e1071")
   library(e1071)
   
-  dtrain <-rbind(used_car_data[1:10,],used_car_data[11:7180,])
-  print(dtrain)
-  dtest <-rbind(used_car_data[7180:7190,],used_car_data[7191:9582,])
-  print(dtest)
+  dtrain <- used_car_data[1:8000, ]  # Training data (rows 1 to 7180)
+  dtest <- used_car_data[8001:9582, ]  # Testing data (rows 7181 to 9582)
   
-  x <-used_car_data[,-7]
-  print(x)
+  # Separate features (x) and target variable (y) for training and testing
+  x_train <- dtrain[, -7]  # Features for training (all columns except the 7th)
+  y_train <- dtrain[, 7]   # Target variable for training (7th column)
   
-  y<-used_car_data[,7]
-  print(y)
+  x_test <- dtest[, -7]    # Features for testing
+  y_test <- dtest[, 7]     # Target variable for testing
   
-  ClassCars<-naiveBayes(AskPrice~.,data=dtrain)
+  # Train the Naive Bayes model using x and y
+  library(e1071)  # Ensure the e1071 library is loaded for naiveBayes
+  ClassCars <- naiveBayes(x_train, y_train)
   
-  PricePredition<-predict(ClassCars,newdata=dtest)
+  # Predict the target variable on the test data
+  PricePrediction <- predict(ClassCars, x_test)
+  
+  # Calculate accuracy
+  correct_predictions <- sum(PricePrediction == y_test)  # Count correct predictions
+  accuracy <- correct_predictions / length(y_test)  # Calculate accuracy
+  
+  # Print results
+  print("Predicted Prices:")
+  print(PricePrediction)
+  print(paste("Accuracy:", accuracy*100))
   
   
   
+  #########################################33
+  
+  
+  install.packages("class")
+  install.packages("caret")
+  
+  # Installing Packages 
+  install.packages("e1071") 
+  install.packages("caTools") 
+
+  # Loading package 
+  library(e1071) 
+  library(caTools) 
+  library(class)
+
+  split <- sample.split(used_car_data, SplitRatio = 0.7) 
+  train_cl <- subset(used_car_data, split == "TRUE") 
+  test_cl <- subset(used_car_data, split == "FALSE") 
+  print(test_cl)
+  # Feature Scaling 
+  train_scale <- train_cl[, 1:6]
+  test_scale <- test_cl[, 1:6]
+  
+  print(train_scale)
+  
+  
+  knn_pred <- knn(train = train_scale, test = test_scale, cl = train_cl$AskPrice, k = 19)
+  correct_predictions_knn <- sum(knn_pred == y_test)
+  print(correct_predictions_knn)
+  print(knn_pred)
+  accuracy_knn <- correct_predictions_knn / length(y_test)
+  print(accuracy_knn*100)
   
   
   
