@@ -213,6 +213,7 @@ colSums(is.na(used_car_data))
   library(caTools) 
   library(class)
 
+  
   split <- sample.split(used_car_data, SplitRatio = 0.7) 
   train_cl <- subset(used_car_data, split == "TRUE") 
   test_cl <- subset(used_car_data, split == "FALSE") 
@@ -224,12 +225,75 @@ colSums(is.na(used_car_data))
   print(train_scale)
   
   
-  knn_pred <- knn(train = train_scale, test = test_scale, cl = train_cl$AskPrice, k = 19)
+  knn_pred <- knn(train = train_cl, test = train_cl, cl = train_cl$AskPrice, k = 1)
   correct_predictions_knn <- sum(knn_pred == y_test)
   print(correct_predictions_knn)
   print(knn_pred)
   accuracy_knn <- correct_predictions_knn / length(y_test)
   print(accuracy_knn*100)
   
+  ################################### Another way in KNN
+  validationIndex <- createDataPartition(used_car_data$AskPrice, p=0.70, list=FALSE)
+  
+  train <- dataset[validationIndex,] # 70% of data to training
+  test <- dataset[-validationIndex,]
+  
+  
+  
+  ################ Linear Regression
+  
+  install.packages("ggplot2")
+  install.packages("dplyr")
+  install.packages("broom")
+  install.packages("ggpubr")
+  
+  library(ggplot2)
+  library(dplyr)
+  library(broom)
+  library(ggpubr)
+  
+  
+  install.packages('caTools')
+  library(caTools)
+  x_train <- dtrain[, -7]  # Features for training (all columns except the 7th)
+  y_train <- dtrain[, 7]   # Target variable for training (7th column)
+  
+  x_test <- dtest[, -7]    # Features for testing
+  y_test <- dtest[, 7]  
+  split <- sample.split(used_car_data, SplitRatio = 0.7) 
+  print(split)
+  train_cl <- subset(used_car_data, split == "TRUE") 
+  print(train_cl)
+  test_cl <- subset(used_car_data, split == "FALSE")
+
+  
+  # Fitting Simple Linear Regression to the Training set
+  linear<- lm(formula = train_cl$AskPrice ~ train_cl$Brand+train_cl$model+train_cl$Age+train_cl$model+train_cl$kmDriven+train_cl$Transmission+train_cl$FuelType,
+           data = train_cl)
+  
+  predictions <- predict(linear, newdata = x_test)
+  
+  
+  # Evaluate Model Accuracy
+  # Calculate Mean Absolute Error (MAE)
+  mae <- mean(abs(test_cl$AskPrice - predictions))
+  print(paste("Mean Absolute Error (MAE):", mae))
+  
+  # Calculate Mean Squared Error (MSE)
+  mse <- mean((test_cl$AskPrice - predictions)^2)
+  print(paste("Mean Squared Error (MSE):", mse))
+  
+  # Calculate Root Mean Squared Error (RMSE)
+  rmse <- sqrt(mse)
+  print(paste("Root Mean Squared Error (RMSE):", rmse))
+  
+  # R-squared value on Test Set
+  rss <- sum((test_cl$AskPrice - predictions)^2)  # Residual Sum of Squares
+  tss <- sum((test_cl$AskPrice - mean(test_cl$AskPrice))^2)  # Total Sum of Squares
+  r_squared <- 1 - (rss / tss)
+  
+  print(paste("R-squared on Test Set:", r_squared))
+  
+
   
   
