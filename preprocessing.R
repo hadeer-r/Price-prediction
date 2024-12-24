@@ -60,7 +60,7 @@ colSums(is.na(used_car_data))
   used_car_data$AskPrice <- as.numeric(used_car_data$AskPrice)
   
   used_car_data <- used_car_data[, -7]
-  
+
   par(mfrow=c(2,3))
   
   plot(sort(used_car_data$Brand))
@@ -164,136 +164,52 @@ colSums(is.na(used_car_data))
   
   boxplot(used_car_data, col = rainbow(6), ylab = "used_car_data Boxplot")
 
+#_______________MODELS________________#
   
-  # using Naive Base
+  # needed packages
+  install.packages('caret', dependencies = TRUE)
+  library(caret)
   
-  install.packages("e1071")
-  library(e1071)
+# 1. Linear Regression
   
-  dtrain <- used_car_data[1:8000, ]  # Training data (rows 1 to 7180)
-  dtest <- used_car_data[8001:9582, ]  # Testing data (rows 7181 to 9582)
-  
-  # Separate features (x) and target variable (y) for training and testing
-  x_train <- dtrain[, -7]  # Features for training (all columns except the 7th)
-  y_train <- dtrain[, 7]   # Target variable for training (7th column)
-  
-  x_test <- dtest[, -7]    # Features for testing
-  y_test <- dtest[, 7]     # Target variable for testing
-  
-  # Train the Naive Bayes model using x and y
-  library(e1071)  # Ensure the e1071 library is loaded for naiveBayes
-  ClassCars <- naiveBayes(x_train, y_train)
-  
-  # Predict the target variable on the test data
-  PricePrediction <- predict(ClassCars, x_test)
-  
-  # Calculate accuracy
-  correct_predictions <- sum(PricePrediction == y_test)  # Count correct predictions
-  accuracy <- correct_predictions / length(y_test)  # Calculate accuracy
-  
-  # Print results
-  print("Predicted Prices:")
-  print(PricePrediction)
-  print(paste("Accuracy:", accuracy*100))
-  
-  
-  
-  #########################################33
-  
-  
-  install.packages("class")
-  install.packages("caret")
-  
-  # Installing Packages 
-  install.packages("e1071") 
-  install.packages("caTools") 
+#split data
+trainIndex <- createDataPartition(used_car_data$AskPrice, p = 0.8, list = FALSE)
+trainData <- used_car_data[trainIndex, ]
+testData <- used_car_data[-trainIndex, ]
 
-  # Loading package 
-  library(e1071) 
-  library(caTools) 
-  library(class)
+dim(trainIndex)
+dim(trainData)
+dim(testData)
+ 
+# training model 
+linear_model_cars <- lm(AskPrice ~. , data = trainData)
 
-  
-  split <- sample.split(used_car_data, SplitRatio = 0.7) 
-  train_cl <- subset(used_car_data, split == "TRUE") 
-  test_cl <- subset(used_car_data, split == "FALSE") 
-  print(test_cl)
-  # Feature Scaling 
-  train_scale <- train_cl[, 1:6]
-  test_scale <- test_cl[, 1:6]
-  
-  print(train_scale)
-  
-  
-  knn_pred <- knn(train = train_cl, test = train_cl, cl = train_cl$AskPrice, k = 1)
-  correct_predictions_knn <- sum(knn_pred == y_test)
-  print(correct_predictions_knn)
-  print(knn_pred)
-  accuracy_knn <- correct_predictions_knn / length(y_test)
-  print(accuracy_knn*100)
-  
-  ################################### Another way in KNN
-  validationIndex <- createDataPartition(used_car_data$AskPrice, p=0.70, list=FALSE)
-  
-  train <- dataset[validationIndex,] # 70% of data to training
-  test <- dataset[-validationIndex,]
-  
-  
-  
-  ################ Linear Regression
-  
-  install.packages("ggplot2")
-  install.packages("dplyr")
-  install.packages("broom")
-  install.packages("ggpubr")
-  
-  library(ggplot2)
-  library(dplyr)
-  library(broom)
-  library(ggpubr)
-  
-  
-  install.packages('caTools')
-  library(caTools)
-  x_train <- dtrain[, -7]  # Features for training (all columns except the 7th)
-  y_train <- dtrain[, 7]   # Target variable for training (7th column)
-  
-  x_test <- dtest[, -7]    # Features for testing
-  y_test <- dtest[, 7]  
-  split <- sample.split(used_car_data, SplitRatio = 0.7) 
-  print(split)
-  train_cl <- subset(used_car_data, split == "TRUE") 
-  print(train_cl)
-  test_cl <- subset(used_car_data, split == "FALSE")
+str(linear_model_cars)
 
-  
-  # Fitting Simple Linear Regression to the Training set
-  linear<- lm(formula = train_cl$AskPrice ~ train_cl$Brand+train_cl$model+train_cl$Age+train_cl$model+train_cl$kmDriven+train_cl$Transmission+train_cl$FuelType,
-           data = train_cl)
-  
-  predictions <- predict(linear, newdata = x_test)
-  
-  
-  # Evaluate Model Accuracy
-  # Calculate Mean Absolute Error (MAE)
-  mae <- mean(abs(test_cl$AskPrice - predictions))
-  print(paste("Mean Absolute Error (MAE):", mae))
-  
-  # Calculate Mean Squared Error (MSE)
-  mse <- mean((test_cl$AskPrice - predictions)^2)
-  print(paste("Mean Squared Error (MSE):", mse))
-  
-  # Calculate Root Mean Squared Error (RMSE)
-  rmse <- sqrt(mse)
-  print(paste("Root Mean Squared Error (RMSE):", rmse))
-  
-  # R-squared value on Test Set
-  rss <- sum((test_cl$AskPrice - predictions)^2)  # Residual Sum of Squares
-  tss <- sum((test_cl$AskPrice - mean(test_cl$AskPrice))^2)  # Total Sum of Squares
-  r_squared <- 1 - (rss / tss)
-  
-  print(paste("R-squared on Test Set:", r_squared))
-  
+# calculate rmse for trained data
+used_car_reg_rmse_train <- trainData %>%
+  mutate(pred.reg.train = predict(linear_model_cars))
 
-  
-  
+View(used_car_reg_rmse_train)
+
+dev.new()
+plot(used_car_reg_rmse_train$AskPrice, used_car_reg_rmse_train$pred.reg.train)
+abline(0, 1, col = "red")
+
+mse <- used_car_reg_rmse_train %>%
+  mutate(error = pred.reg.train - AskPrice,
+         sq.error = error^2) %>%
+  summarise(mse = mean(sq.error))
+
+View(mse)
+
+rmse_train<-sqrt(mse)
+print(rmse_train)
+
+#calculate rmse for test data
+
+pred_reg_test <- predict(linear_model_cars, newdata = testData)
+reg_rmse_test <- sqrt(mean((pred_reg_test - testData$AskPrice)^2))
+
+print(reg_rmse_test)
+
