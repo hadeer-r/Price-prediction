@@ -18,7 +18,7 @@ most_frequent_kmDriven <- names(sorted_kmDriven_counts)[1]
 
 print(most_frequent_kmDriven)
 
-used_car_data$kmDriven[is.na(used_car_data$kmDriven)]<-most_frequent_kmDriven
+used_car_data <- na.omit(used_car_data)
 
 colSums(is.na(used_car_data))
 #used_car_data$PostedDate <- dmy(used_car_data$PostedDate)
@@ -55,12 +55,13 @@ colSums(is.na(used_car_data))
   
   used_car_data$FuelType <- as.factor(used_car_data$FuelType)
   used_car_data$FuelType <- as.numeric(used_car_data$FuelType)
-  
   used_car_data$AskPrice <- as.factor(used_car_data$AskPrice)
   used_car_data$AskPrice <- as.numeric(used_car_data$AskPrice)
   
-  used_car_data <- used_car_data[, -7]
 
+  
+  used_car_data <- used_car_data[, -7]
+  str(used_car_data)
   par(mfrow=c(2,3))
   
   plot(sort(used_car_data$Brand))
@@ -141,33 +142,53 @@ colSums(is.na(used_car_data))
   hist(used_car_data$AskPrice, col = "lightblue", ylab="frequency" ,xlab = "AskPrice", main = "AskPrice Histogram")
   
 
-  boxplot(used_car_data$Brand, col = rainbow(6), ylab = "Brand Boxplot")
+    boxplot(used_car_data$Brand, col = rainbow(6), ylab = "Brand Boxplot")
   rug(used_car_data$Brand,side=2)
+
   
-  boxplot(used_car_data$model, col = rainbow(6), ylab = "model Boxplot")
+    boxplot(used_car_data$model, col = rainbow(6), ylab = "model Boxplot")
   rug(used_car_data$model,side=2)
+
   
-  boxplot(used_car_data$Age, col = rainbow(6), ylab = "Age Boxplot")
+#__founding outliers in Age
+  dev.new()
+    boxplot(used_car_data$Age, col = rainbow(6), ylab = "Age Boxplot")
   rug(used_car_data$Age,side=2)
   
+age_out_rm <- boxplot.stats(used_car_data$Age)$out
+out_in <- which(used_car_data$Age %in% c(age_out_rm))
+
+used_car_data<-used_car_data[-out_in,] # remove outliers
+
+
+dev.new()
+boxplot(used_car_data[-out_in,]$Age, col = rainbow(6), ylab = "Age Boxplot")
+rug(used_car_data$Age,side=2)
+
+#____________________________
+
   boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
   rug(used_car_data$kmDriven,side=2)
   
+
   boxplot(used_car_data$Transmission, col = rainbow(6), ylab = "Transmission Boxplot")
   rug(used_car_data$Transmission,side=2)
-  
+
   boxplot(used_car_data$FuelType, col = rainbow(6), ylab = "FuelType Boxplot")
   rug(used_car_data$FuelType,side=2)
-  
+
   boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
   rug(used_car_data$AskPrice,side=2)
-  
+
   boxplot(used_car_data, col = rainbow(6), ylab = "used_car_data Boxplot")
+  
 
 #_______________MODELS________________#
   
   # needed packages
   install.packages('caret', dependencies = TRUE)
+  install.packages("xgboost")
+  install.packages("caret")
   library(caret)
   
 # 1. Linear Regression
@@ -211,5 +232,9 @@ print(rmse_train)
 pred_reg_test <- predict(linear_model_cars, newdata = testData)
 reg_rmse_test <- sqrt(mean((pred_reg_test - testData$AskPrice)^2))
 
+r_squared <- cor(testData$AskPrice, pred_reg_test)^2
+print(r_squared)
 print(reg_rmse_test)
+
+#______________________________________________
 
