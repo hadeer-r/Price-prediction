@@ -1,12 +1,13 @@
 # installing the needed libraries 
 
 
-# Function to remove outliers
-remove_outliers <- function(x) {
+# Function to find outliers
+find_outliers <- function(x) {
   Q1 <- quantile(x, 0.25, na.rm = TRUE)
   Q3 <- quantile(x, 0.75, na.rm = TRUE)
-  IQR_value <- IQR(x, na.rm = TRUE)
-  x[x >= (Q1 - 1.5 * IQR_value) & x <= (Q3 + 1.5 * IQR_value)]
+  IQR_value <- Q3 - Q1
+  outliers <- x[x < (Q1 - 1.5 * IQR_value) | x > (Q3 + 1.5 * IQR_value)]
+  return(outliers)
 }
 
 
@@ -99,50 +100,19 @@ nrow(duplicated_rows)
 #___________ Remove oultiers from Age AskPrice KmDriven
 
 
-#kmDriven
-dev.new()
-boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
-rug(used_car_data$kmDriven,side=2)
-
-used_car_data <- used_car_data[!is.na(used_car_data$kmDriven) & used_car_data$kmDriven %in% remove_outliers(used_car_data$kmDriven), ]
-
-dev.new()
-boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
-rug(used_car_data$kmDriven,side=2)
-
-
-#Age
-dev.new()
-boxplot(used_car_data$Age, col = rainbow(6), ylab = "Age Boxplot")
-rug(used_car_data$Age,side=2)
-
-used_car_data <- used_car_data[!is.na(used_car_data$Age) & used_car_data$Age %in% remove_outliers(used_car_data$used_car_data), ]
-
-dev.new()
-boxplot(used_car_data[-out_in,]$Age, col = rainbow(6), ylab = "Age Boxplot")
-rug(used_car_data$Age,side=2)
-
-#AskPrice
-dev.new()
-boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
-rug(used_car_data$AskPrice,side=2)
-
-used_car_data <- used_car_data[!is.na(used_car_data$AskPrice) & used_car_data$AskPrice %in% remove_outliers(used_car_data$AskPrice), ]
-
-dev.new()
-boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
-rug(used_car_data$AskPrice,side=2)
-
-
 # Removing outliers in Age
 dev.new()
 boxplot(used_car_data$Age, col = rainbow(6), ylab = "Age Boxplot")
 rug(used_car_data$Age,side=2)
 
-age_out_rm <- boxplot.stats(used_car_data$Age)$out
-out_in <- which(used_car_data$Age %in% c(age_out_rm))
+while(length(find_outliers(used_car_data$Age))!=0)
+{
+  
+  used_car_data <- used_car_data[!used_car_data$Age %in% find_outliers(used_car_data$Age), ]
+  
+  
+}
 
-used_car_data<-used_car_data[-out_in,] # remove outliers
 dim(used_car_data)
 
 dev.new()
@@ -156,12 +126,15 @@ dev.new()
 boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
 rug(used_car_data$kmDriven,side=2)
 
-kmDriven_out_rm <- boxplot.stats(used_car_data$kmDriven)$out
-kmDriven_out_in <- which(used_car_data$kmDriven %in% c(kmDriven_out_rm))
+while(length(find_outliers(used_car_data$kmDriven))!=0)
+{
 
-used_car_data<-used_car_data[-kmDriven_out_in,] # remove outliers
+  used_car_data <- used_car_data[!used_car_data$kmDriven %in% find_outliers(used_car_data$kmDriven), ]
+  
+  
+}
+
 dim(used_car_data)
-
 dev.new()
 boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
 rug(used_car_data$kmDriven,side=2)
@@ -173,40 +146,22 @@ rug(used_car_data$kmDriven,side=2)
 dev.new()
 boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
 rug(used_car_data$AskPrice,side=2)
-
-AskPrice_out_rm <- boxplot.stats(used_car_data$AskPrice)$out
-AskPrice_out_in <- which(used_car_data$AskPrice %in% c(AskPrice_out_rm))
-
-used_car_data<-used_car_data[-AskPrice_out_in,] # remove outliers
+while(length(find_outliers(used_car_data$AskPrice))!=0)
+{
+  
+  used_car_data <- used_car_data[!used_car_data$AskPrice %in% find_outliers(used_car_data$AskPrice), ]
+  
+  
+}
 dim(used_car_data)
 
 dev.new()
 boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
 rug(used_car_data$AskPrice,side=2)
 
-#__________________________________________
-# scalling by min/max method from 0 to 1
-
-#used_car_data$Brand <- (used_car_data$Brand - min(used_car_data$Brand, na.rm = TRUE)) / (max(used_car_data$Brand, na.rm = TRUE) - min(used_car_data$Brand, na.rm = TRUE))
-#used_car_data$model <- (used_car_data$model - min(used_car_data$model, na.rm = TRUE)) / (max(used_car_data$model, na.rm = TRUE) - min(used_car_data$model, na.rm = TRUE))
-#used_car_data$Age <- (used_car_data$Age - min(used_car_data$Age, na.rm = TRUE)) / (max(used_car_data$Age, na.rm = TRUE) - min(used_car_data$Age, na.rm = TRUE))
 
 
-#used_car_data$Transmission <- (used_car_data$Transmission - min(used_car_data$Transmission, na.rm = TRUE)) / (max(used_car_data$Transmission, na.rm = TRUE) - min(used_car_data$Transmission, na.rm = TRUE))
-#used_car_data$FuelType <- (used_car_data$FuelType - min(used_car_data$FuelType, na.rm = TRUE)) / (max(used_car_data$FuelType, na.rm = TRUE) - min(used_car_data$FuelType, na.rm = TRUE))
-
-
-#used_car_data$kmDriven <- (used_car_data$kmDriven - min(used_car_data$kmDriven, na.rm = TRUE))/ (max(used_car_data$kmDriven, na.rm = TRUE) - min(used_car_data$kmDriven, na.rm = TRUE))
-#used_car_data$AskPrice <- (used_car_data$AskPrice - min(used_car_data$AskPrice, na.rm = TRUE))/ (max(used_car_data$AskPrice, na.rm = TRUE) - min(used_car_data$AskPrice, na.rm = TRUE))
-
-
-#a<-1
-#b<-1000
-#used_car_data$kmDriven <- round(a+(used_car_data$kmDriven - min(used_car_data$kmDriven, na.rm = TRUE))*(b-a) / (max(used_car_data$kmDriven, na.rm = TRUE) - min(used_car_data$kmDriven, na.rm = TRUE)),0)
-#used_car_data$AskPrice <- round(a+(used_car_data$AskPrice - min(used_car_data$AskPrice, na.rm = TRUE))*(b-a) / (max(used_car_data$AskPrice, na.rm = TRUE) - min(used_car_data$AskPrice, na.rm = TRUE)),0)
-
-
-# checking structure
+#_________________checking structure_________________
 str(used_car_data)
 par(mfrow=c(2,3))
 
@@ -298,12 +253,6 @@ rug(used_car_data$Brand,side=2)
 boxplot(used_car_data$model, col = rainbow(6), ylab = "model Boxplot")
 rug(used_car_data$model,side=2)
 
-
-
-
-
-#____________________________
-dev.new()
 boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
 rug(used_car_data$kmDriven,side=2)
 
@@ -336,70 +285,33 @@ test_data <- used_car_data[-trainIndex, ]
 
 
 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+#_______________MODELS________________#
 
-##_______________MODELS________________#
-
-# 1. Linear Regression
-
-
-# training model 
-linear_model_cars <- lm(AskPrice ~. , data = train_data)
-
-str(linear_model_cars)
-
-# calculate rmse for trained data
-used_car_reg_rmse_train <- train_data %>%
-  mutate(pred.reg.train = predict(linear_model_cars))
-
-View(used_car_reg_rmse_train)
-
-dev.new()
-plot(used_car_reg_rmse_train$AskPrice, used_car_reg_rmse_train$pred.reg.train)
-abline(0, 1, col = "red")
-
-mse <- used_car_reg_rmse_train %>%
-  mutate(error = pred.reg.train - AskPrice,
-         sq.error = error^2) %>%
-  summarise(mse = mean(sq.error))
-
-View(mse)
-
-rmse_train<-sqrt(mse)
-print(rmse_train)
-
-#calculate rmse for test data
-
-pred_reg_test <- predict(linear_model_cars, newdata = test_data)
-reg_rmse_test <- sqrt(mean((pred_reg_test - test_data$AskPrice)^2))
-
-r_squared <- cor(test_data$AskPrice, pred_reg_test)^2
-print(r_squared)
-print(reg_rmse_test)
-
-
-
------------------------------------------------------------------------------------------------------------------------------------------------------------
-  #  Trying SVm
+# 1.Trying SVm
   
-  svm_model <- svm(train_data, train_data$AskPrice, type = "eps-regression", kernel = "radial")
+svm_model <- svm(train_data, train_data$AskPrice, type = "eps-regression", kernel = "radial")
 
-# Predict on the test set
+
 predictions_svm <- predict(svm_model, test_data, type= "response")
 
 print(svm_model)
-# Calculate accuracy metrics
+
+
 mae <- mean(abs(predictions_svm - test_data$AskPrice))  # Mean Absolute Error
 mse <- mean((predictions_svm - test_data$AskPrice)^2)  # Mean Squared Error
 rmse <- sqrt(mse)
 
 r2 <- cor(predictions_svm,test_data$AskPrice)^2
-r2 <- 1 - (sum((test_data$AskPrice - predictions_svm)^2) / sum((test_data$AskPrice - mean(predictions_svm))^2))
-           # Print metrics
+
 cat("Mean Absolute Error (MAE):", format(mae, scientific = FALSE), "\
 ")
+
 cat("Root Mean Squared Error (RMSE):", format(rmse, scientific = FALSE), "\
 ")
+
 cat("R-squared (R2):", round(r2, 4))
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
   # 2. RANDOM FOREST MODEL HAFSA ELSHERERAAAAAA
   
@@ -440,7 +352,7 @@ dt_model_enhanced <- rpart(
   control = rpart.control(
     minsplit = 2,
     minbucket = 1,
-    maxdepth = 15,
+    maxdepth = 30,
     cp = 0.0001  # Reduced complexity parameter for more detailed tree
   )
 )
@@ -458,7 +370,7 @@ dt_r2 <- cor(dt_pred, test_data$AskPrice)^2
 print(paste("Enhanced Decision Tree RMSE:", format(dt_rmse, scientific = FALSE)))
 print(paste("Enhanced Decision Tree R-squared:", round(dt_r2, 3)))
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------
   
   # 4. XGBOOST MODEL 
 library(stringr)  #may be removed
@@ -487,5 +399,5 @@ r2 <- cor(test_data$AskPrice, predictions)^2
 print(paste("RMSE:", format(rmse, scientific = FALSE)))
 print(paste("R-squared:", round(r2, 4)))
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------------------------------------
   
