@@ -69,16 +69,11 @@ used_car_data$Brand <- as.numeric(used_car_data$Brand)
 used_car_data$model <- as.factor(used_car_data$model)
 used_car_data$model <- as.numeric(used_car_data$model)
 
-#used_car_data$kmDriven <- as.factor(used_car_data$kmDriven)
-#used_car_data$kmDriven <- as.numeric(used_car_data$kmDriven)
-
 used_car_data$Transmission <- as.factor(used_car_data$Transmission)
 used_car_data$Transmission <- as.numeric(used_car_data$Transmission)
 
 used_car_data$FuelType <- as.factor(used_car_data$FuelType)
 used_car_data$FuelType <- as.numeric(used_car_data$FuelType)
-#used_car_data$AskPrice <- as.factor(used_car_data$AskPrice)
-#used_car_data$AskPrice <- as.numeric(used_car_data$AskPrice)
 
 
 #check if there is any duplicated data and handle it
@@ -88,11 +83,11 @@ used_car_data$FuelType <- as.numeric(used_car_data$FuelType)
 duplicated_rows <- used_car_data[duplicated(used_car_data), ]
 nrow(duplicated_rows)
 
-# there is 748 dupliactes rows so we will delete them by this 
 used_car_data <- unique(used_car_data)
 dim(used_car_data)
 
 #check again if there is any duplicated data after deleting them all 
+dev.new()
 duplicated_rows <- used_car_data[duplicated(used_car_data), ]
 nrow(duplicated_rows)
 
@@ -114,7 +109,7 @@ while(length(find_outliers(used_car_data$Age))!=0)
 }
 
 dim(used_car_data)
-
+#check again if there is any duplicated data after deleting them all 
 dev.new()
 boxplot(used_car_data[-out_in,]$Age, col = rainbow(6), ylab = "Age Boxplot")
 rug(used_car_data$Age,side=2)
@@ -135,6 +130,8 @@ while(length(find_outliers(used_car_data$kmDriven))!=0)
 }
 
 dim(used_car_data)
+
+#check again if there is any duplicated data after deleting them all 
 dev.new()
 boxplot(used_car_data$kmDriven, col = rainbow(6), ylab = "kmDriven Boxplot")
 rug(used_car_data$kmDriven,side=2)
@@ -155,6 +152,7 @@ while(length(find_outliers(used_car_data$AskPrice))!=0)
 }
 dim(used_car_data)
 
+#check again if there is any duplicated data after deleting them all 
 dev.new()
 boxplot(used_car_data$AskPrice, col = rainbow(6), ylab = "AskPrice Boxplot")
 rug(used_car_data$AskPrice,side=2)
@@ -275,7 +273,7 @@ boxplot(used_car_data, col = rainbow(6), ylab = "used_car_data Boxplot")
 
 
 
-#______________________________Spliting Data to Train________________________________
+#______________________________Spliting Data to Train Models________________________________
 set.seed(123) #34an admn en lt2sem ykon sabt kol mra nsh8l feha el code 34an nfs el result tzhr kol mra
 
 trainIndex <- createDataPartition(used_car_data$AskPrice, p = 0.8, list = FALSE)
@@ -288,7 +286,7 @@ test_data <- used_car_data[-trainIndex, ]
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 #_______________MODELS________________#
 
-# 1.Trying SVm
+# 1. SVM
   
 svm_model <- svm(train_data, train_data$AskPrice, type = "eps-regression", kernel = "radial")
 
@@ -329,6 +327,7 @@ cat("R-squared (R2):", round(r2, 4))
 rf_pred_improved <- predict(rf_model_improved, test_data)
 rf_rmse_improved <- sqrt(mean((rf_pred_improved - test_data$AskPrice)^2))
 rf_r2_improved <- cor(rf_pred_improved, test_data$AskPrice)^2
+
 print(paste("Improved Random Forest R-squared:", round(rf_r2_improved, 3)))
 print(paste("Improved Random Forest RMSE:", format(rf_rmse_improved, scientific = FALSE)))
 
