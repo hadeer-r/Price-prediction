@@ -111,7 +111,7 @@ while(length(find_outliers(used_car_data$Age))!=0)
 dim(used_car_data)
 #check again if there is any duplicated data after deleting them all 
 dev.new()
-boxplot(used_car_data[-out_in,]$Age, col = rainbow(6), ylab = "Age Boxplot")
+boxplot(used_car_data$Age, col = rainbow(6), ylab = "Age Boxplot")
 rug(used_car_data$Age,side=2)
 #__________________________________________
 
@@ -123,7 +123,7 @@ rug(used_car_data$kmDriven,side=2)
 
 while(length(find_outliers(used_car_data$kmDriven))!=0)
 {
-
+  
   used_car_data <- used_car_data[!used_car_data$kmDriven %in% find_outliers(used_car_data$kmDriven), ]
   
   
@@ -287,8 +287,20 @@ test_data <- used_car_data[-trainIndex, ]
 #_______________MODELS________________#
 
 # 1. SVM
-  
-svm_model <- svm(train_data, train_data$AskPrice, type = "eps-regression", kernel = "radial")
+# epsilon to specfiy distance between lines
+#
+svm_model <- svm(train_data, train_data$AskPrice, type = "eps-regression", epsilon = 0.1)
+
+used_car_svm_train <- train_data %>%
+  mutate(pred.reg.train = predict(svm_model))
+
+
+mse_train_svm <- used_car_svm_train %>%
+  mutate(error = pred.reg.train - AskPrice,
+         sq.error = error^2) %>%
+  summarise(mse = mean(sq.error))
+rmse_train_svm<-sqrt(mse)
+
 
 
 predictions_svm <- predict(svm_model, test_data, type= "response")
@@ -296,33 +308,37 @@ predictions_svm <- predict(svm_model, test_data, type= "response")
 print(svm_model)
 
 
-mae <- mean(abs(predictions_svm - test_data$AskPrice))  # Mean Absolute Error
-mse <- mean((predictions_svm - test_data$AskPrice)^2)  # Mean Squared Error
-rmse <- sqrt(mse)
+mse_test_svm <- mean((predictions_svm - test_data$AskPrice)^2)  
+rmse_test_svm <- sqrt(mse)# Root Mean Squared Error
 
-r2 <- cor(predictions_svm,test_data$AskPrice)^2
+r2_test_svm <- cor(predictions_svm,test_data$AskPrice)^2
 
-cat("Mean Absolute Error (MAE):", format(mae, scientific = FALSE), "\
+#Root Mean Squared Error (RMSE) for trained data:"
+print(rmse_train_svm)
+cat("Root Mean Squared Error (RMSE):", format(rmse_test_svm, scientific = FALSE), "\
 ")
 
-cat("Root Mean Squared Error (RMSE):", format(rmse, scientific = FALSE), "\
-")
-
-cat("R-squared (R2):", round(r2, 4))
+cat("R-squared (R2):", round(r2_test_svm, 4))
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
   # 2. RANDOM FOREST MODEL HAFSA ELSHERERAAAAAA
   
   
+  
+  # when trying to add Kmdriven the r decreases to 81.2%%
+  # when trying to remove transmission feature it doesnot affect in r 
+  # when trying to remove model feature the r becomes 68% 
+  # when removing age feature r becomes 64%
+  
   rf_model_improved <- randomForest(
-    AskPrice ~ Brand + model  + Age  + Transmission +
+    AskPrice ~ Brand +  model  + Age + Transmission   +
       FuelType ,
     data = train_data,
     ntree = 1000,
-    mtry = 5,
+    mtry = 5,    # trying to make it 3 and the r is 82.2%  
     nodesize = 10,
     importance = TRUE
-  )
+  )-
 
 rf_pred_improved <- predict(rf_model_improved, test_data)
 rf_rmse_improved <- sqrt(mean((rf_pred_improved - test_data$AskPrice)^2))
@@ -331,30 +347,37 @@ rf_r2_improved <- cor(rf_pred_improved, test_data$AskPrice)^2
 print(paste("Improved Random Forest R-squared:", round(rf_r2_improved, 3)))
 print(paste("Improved Random Forest RMSE:", format(rf_rmse_improved, scientific = FALSE)))
 
-
+# to print the importance of each feature in the prediction 
+print(importance(rf_model_improved))
 ---------------------------------------------------------------------------------------------------------------------------------------------
   # 3. DECISION TREE FOR HABIBA ELTAYPA 
   
   # the acc without feature engineering is 63%
   # the acc without feature engineering but with this code is 72 % 
   
-
-
-# Create interaction terms and additional features
-dt_model_enhanced <- rpart(
-  AskPrice ~ Brand + model + Age + kmDriven + Transmission +
-    I(Age^2) + I(kmDriven^2) + # Add polynomial terms
-    I(Age * kmDriven) + # Add interaction term
-    I(log(kmDriven + 1)), # Add log transformation
-  data = train_data,
-  method = "anova",
-  control = rpart.control(
-    minsplit = 2,
-    minbucket = 1,
-    maxdepth = 30,
-    cp = 0.0001  # Reduced complexity parameter for more detailed tree
+  
+  # when trying to add transmission feature the r decreased to 75%
+  # when trying to remove age feature the r becomes the same 
+  # when trying to remove the brand feature the r becomes 70.9%
+  
+  
+  
+  
+  # Create interaction terms and additional features
+  dt_model_enhanced <- rpart(
+    AskPrice ~ Brand+ model +Age  + kmDriven  +
+      I(Age^2) + I(kmDriven^2) + # Add polynomial terms
+      I(Age * kmDriven) + # Add interaction term
+      I(log(kmDriven + 1)), # Add log transformation
+    data = train_data,
+    method = "anova",
+    control = rpart.control(
+      minsplit = 2,
+      minbucket = 1,
+      maxdepth = 30,
+      cp = 0.0001  # Reduced complexity parameter for more detailed tree
+    )
   )
-)
 
 # Cross-validation to find optimal complexity parameter
 printcp(dt_model_enhanced)
@@ -370,8 +393,8 @@ print(paste("Enhanced Decision Tree RMSE:", format(dt_rmse, scientific = FALSE))
 print(paste("Enhanced Decision Tree R-squared:", round(dt_r2, 3)))
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------
-  
-  # 4. XGBOOST MODEL 
+
+# 4. XGBOOST MODEL 
 library(stringr)  #may be removed
 library(xgboost)
 
@@ -399,4 +422,3 @@ print(paste("RMSE:", format(rmse, scientific = FALSE)))
 print(paste("R-squared:", round(r2, 4)))
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
